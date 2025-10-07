@@ -4,13 +4,12 @@ from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.filters import Command
-from aiogram.client.default import DefaultBotProperties
 import aiohttp
 
 # ✅ Your Bot API Token
 API_TOKEN = "6936061097:AAG5c-uAi4GzpVlj6Gncpviec4NO0bR1D0Q"
 
-bot = Bot(API_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+bot = Bot(API_TOKEN,parse_mode=ParseMode.HTML)
 dp = Dispatcher()
 
 # ✅ Join Button with Your Group Link
