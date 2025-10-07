@@ -7,7 +7,7 @@ from aiogram.filters import Command
 import aiohttp
 
 # ✅ Your Bot API Token
-API_TOKEN = "6936061097:AAG5c-uAi4GzpVlj6Gncpviec4NO0bR1D0Q"+"sum"
+API_TOKEN = "7988504836:AAHq8mzqtl39PM_wGnDbRqRh56K0W_7HlCs"
 
 bot = Bot(API_TOKEN,parse_mode=ParseMode.HTML)
 dp = Dispatcher()
