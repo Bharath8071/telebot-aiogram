@@ -1,24 +1,39 @@
-
+import os
 import asyncio
+from aiohttp import web
 from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.filters import Command
+from aiogram.client.default import DefaultBotProperties
 import aiohttp
 
-# ✅ Your Bot API Token
-API_TOKEN = "7988504836:AAHq8mzqtl39PM_wGnDbRqRh56K0W_7HlCs"
+# 🔹 Bot token from Telegram
+BOT_TOKEN = os.getenv("BOT_TOKEN", "YOUR_BOT_TOKEN_HERE")
 
-bot = Bot(API_TOKEN,parse_mode=ParseMode.HTML)
+# 🔹 Public Render URL (Render automatically sets this)
+RENDER_URL = os.getenv("RENDER_EXTERNAL_URL")
+
+# 🔹 Webhook configuration
+WEBHOOK_PATH = f"/webhook/{BOT_TOKEN}"
+WEBHOOK_URL = f"https://{RENDER_URL}{WEBHOOK_PATH}"
+
+bot = Bot(BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 dp = Dispatcher()
 
-# ✅ Join Button with Your Group Link
+
+# =========================
+# 🔸 Inline Keyboard
+# =========================
 def join_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="📢 Join Our Group", url="https://t.me/ardonaterbot")],
     ])
 
-# ✅ Function to fetch JSON from the API endpoint
+
+# =========================
+# 🔸 Fetch JSON Data
+# =========================
 async def fetch_json(url):
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as r:
@@ -26,7 +41,10 @@ async def fetch_json(url):
                 return await r.json()
     return None
 
-# ✅ /like command handler
+
+# =========================
+# 🔸 /like command handler
+# =========================
 @dp.message(Command("like"))
 async def like_handler(msg: Message):
     parts = msg.text.split()
@@ -68,10 +86,28 @@ async def like_handler(msg: Message):
         reply_markup=join_keyboard()
     )
 
-# ✅ Start polling the bot
-async def main():
-    print("🤖 Ardonater Bot is running...")
-    await dp.start_polling(bot)
+
+# =========================
+# 🔸 Startup & Shutdown
+# =========================
+async def on_startup(app):
+    await bot.set_webhook(WEBHOOK_URL)
+    print(f"✅ Webhook set: {WEBHOOK_URL}")
+
+
+async def on_shutdown(app):
+    await bot.delete_webhook()
+    await bot.session.close()
+    print("❌ Webhook removed")
+
+
+# =========================
+# 🔸 AIOHTTP Web Server
+# =========================
+app = web.Application()
+app.router.add_post(WEBHOOK_PATH, dp.start_webhook(bot))
+app.on_startup.append(on_startup)
+app.on_shutdown.append(on_shutdown)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    web.run_app(app, host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
