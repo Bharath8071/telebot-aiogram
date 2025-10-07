@@ -6,13 +6,12 @@ from aiogram.enums import ParseMode
 from aiogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.filters import Command
 from aiogram.client.default import DefaultBotProperties
+from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 import aiohttp
 
-# 🔹 Bot token from Telegram
+# 🔹 Bot token and Render public URL
 BOT_TOKEN = os.getenv("BOT_TOKEN", "YOUR_BOT_TOKEN_HERE")
-
-# 🔹 Public Render URL (Render automatically sets this)
-RENDER_URL = os.getenv("RENDER_EXTERNAL_URL")
+RENDER_URL = os.getenv("RENDER_EXTERNAL_URL", "your-app-name.onrender.com")
 
 # 🔹 Webhook configuration
 WEBHOOK_PATH = f"/webhook/{BOT_TOKEN}"
@@ -43,7 +42,7 @@ async def fetch_json(url):
 
 
 # =========================
-# 🔸 /like command handler
+# 🔸 /like Command
 # =========================
 @dp.message(Command("like"))
 async def like_handler(msg: Message):
@@ -88,7 +87,7 @@ async def like_handler(msg: Message):
 
 
 # =========================
-# 🔸 Startup & Shutdown
+# 🔸 Startup / Shutdown
 # =========================
 async def on_startup(app):
     await bot.set_webhook(WEBHOOK_URL)
@@ -102,12 +101,19 @@ async def on_shutdown(app):
 
 
 # =========================
-# 🔸 AIOHTTP Web Server
+# 🔸 Create AIOHTTP App
 # =========================
-app = web.Application()
-app.router.add_post(WEBHOOK_PATH, dp.start_webhook(bot))
-app.on_startup.append(on_startup)
-app.on_shutdown.append(on_shutdown)
+def main():
+    app = web.Application()
+    webhook_handler = SimpleRequestHandler(dispatcher=dp, bot=bot)
+    webhook_handler.register(app, path=WEBHOOK_PATH)
+    setup_application(app, dp, bot=bot)
+
+    app.on_startup.append(on_startup)
+    app.on_shutdown.append(on_shutdown)
+
+    web.run_app(app, host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
+
 
 if __name__ == "__main__":
-    web.run_app(app, host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
+    main()
